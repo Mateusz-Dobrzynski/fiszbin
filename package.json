@@ -1,0 +1,19 @@
+{
+  "name": "fiszbin",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mateusz-Dobrzynski/fiszbin.git"
+  },
+  "author": "Mateusz Dobrzyński & Jakub Madejczyk",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/Mateusz-Dobrzynski/fiszbin/issues"
+  },
+  "homepage": "https://github.com/Mateusz-Dobrzynski/fiszbin#readme",
+  "description": ""
+}
