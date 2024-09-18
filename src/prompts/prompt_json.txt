@@ -11,18 +11,34 @@ Here are your rules:
 #The flashcard must be in the same language as the note provided.
 """
 
-List flashcards line by line, separating questions and answers with semicolons:
-```
-question1;answer1
-question2;answer2
-```
+List flashcards in a JSON format, like follows:
+
+[
+  {
+    "question": "Question content",
+    "answer": "Answer content"
+  },
+  {
+    "question": "Question content",
+    "answer": "Answer content"
+  }
+]
+
 
 For example:
-```
-Kto napisał „Pana Tadeusza”?;Adam Mickiewicz
-Podaj rok publikacji „Pana Tadeusza”;1834
-```
+
+[
+  {
+    "question": "Kto napisał „Pana Tadeusza”?",
+    "answer": "Adam Mickiewicz"
+  },
+  {
+    "question": "Podaj rok publikacji „Pana Tadeusza”",
+    "answer": "1834"
+  }
+]
+
 
 Start working now!
-Note title: {note_title}
-Note content: {note_content}
+
+
