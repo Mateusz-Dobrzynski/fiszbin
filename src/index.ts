@@ -1,4 +1,5 @@
-import writeFlashcardsOllama from "./writeFlashcardsOllama";
+import writeFlashcards from "./writeFlashcards";
+import { readFileContent } from "./utils/fileOperations";
 
 // This is the main function that will be called to generate the flashcards
 // The first argument is the model name, the second argument is the path to the text content
@@ -9,4 +10,12 @@ import writeFlashcardsOllama from "./writeFlashcardsOllama";
 // The model I found to work pretty good is "gemma2:27b"
 // You can experiment with other (possibly smaller) models
 
-writeFlashcardsOllama("gemma2:27b", "test/notes/Oświecenie.md");
+// TODO check if possible to run await without a wrapper main function
+// If done so, it causes an error in the current setup
+// if module in the tsconfig file set to: "module": "es2022", then ollama library import doesn't work
+const main = async () => {
+  const textContext = await readFileContent("test/notes/Sieć Neuronowa.md");
+  writeFlashcards(textContext, "local");
+};
+
+main();

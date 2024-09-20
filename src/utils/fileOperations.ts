@@ -46,7 +46,7 @@ async function writeToTextFile(filePath: string, data: string): Promise<void> {
   }
 }
 
-async function convertToAnkiDeck(filePath: string): Promise<string> {
+async function createTextImportableToAnki(filePath: string): Promise<string> {
   try {
     const absolutePath = path.resolve(filePath);
     const fileContent = await fs.readFile(absolutePath, "utf-8");
@@ -64,4 +64,9 @@ async function convertToAnkiDeck(filePath: string): Promise<string> {
   }
 }
 
-export { readFileContent, writeToTextFile, writeToJsonFile, convertToAnkiDeck };
+export {
+  readFileContent,
+  writeToTextFile,
+  writeToJsonFile,
+  createTextImportableToAnki,
+};

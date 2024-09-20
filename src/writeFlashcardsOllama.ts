@@ -2,13 +2,14 @@ import ollama from "ollama";
 import {
   readFileContent,
   writeToJsonFile,
-  convertToAnkiDeck,
+  createTextImportableToAnki,
   writeToTextFile,
 } from "./utils/fileOperations";
 
-async function writeFlashcardsOllama(model: string, inputTextPath: string) {
-  const instructions = await readFileContent("src/prompts/prompt_json.txt");
-  const textContext = await readFileContent(inputTextPath);
+async function writeFlashcardsOllama(model: string, textContext: string) {
+  const instructions = await readFileContent(
+    "src/prompts/generate_flashcards_json.txt"
+  );
 
   const response = await ollama.chat({
     model: model,
@@ -17,7 +18,9 @@ async function writeFlashcardsOllama(model: string, inputTextPath: string) {
 
   writeToJsonFile("src/responses/response", response.message.content).then(
     async () => {
-      const ankiDeck = await convertToAnkiDeck("src/responses/response.json");
+      const ankiDeck = await createTextImportableToAnki(
+        "src/responses/response.json"
+      );
       writeToTextFile("src/responses/response", ankiDeck);
     }
   );
