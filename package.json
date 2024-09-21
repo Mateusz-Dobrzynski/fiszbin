@@ -19,7 +19,8 @@
   "homepage": "https://github.com/Mateusz-Dobrzynski/fiszbin#readme",
   "description": "",
   "dependencies": {
-    "ollama": "^0.5.9"
+    "ollama": "^0.5.9",
+    "openai": "^4.63.0"
   },
   "devDependencies": {
     "@types/node": "^22.5.5",
