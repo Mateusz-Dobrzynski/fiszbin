@@ -35,8 +35,9 @@ function convertResponseToFlashcards(aiResponse: string): Flashcards {
 }
 
 function convertJsonToFlashcard(json: JSON): Flashcard {
-  assert("question" in Object.keys(json));
-  assert("answer" in Object.keys(json));
+  const keys = Object.keys(json);
+  assert(keys.includes("question"));
+  assert(keys.includes("answer"));
   return json as unknown as Flashcard;
 }
 

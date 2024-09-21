@@ -21,10 +21,10 @@ import {
 const main = async () => {
   const textContext = await readFileContent("test/notes/Sieć Neuronowa.md");
   const flashcards = await writeFlashcards(textContext, "remote");
-  writeFlashcardsToJsonFile("responses/response.json", flashcards);
+  writeFlashcardsToJsonFile("src/responses/response.json", flashcards);
   writeToTextFile(
-    createTextImportableToAnki(flashcards),
-    "responses/response.txt"
+    "src/responses/response.txt",
+    createTextImportableToAnki(flashcards)
   );
 };
 
