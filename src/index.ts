@@ -1,5 +1,10 @@
 import writeFlashcards from "./writeFlashcards";
-import { readFileContent } from "./utils/fileOperations";
+import {
+  createTextImportableToAnki,
+  readFileContent,
+  writeFlashcardsToJsonFile,
+  writeToTextFile,
+} from "./utils/fileOperations";
 
 // This is the main function that will be called to generate the flashcards
 // The first argument is the model name, the second argument is the path to the text content
@@ -15,7 +20,12 @@ import { readFileContent } from "./utils/fileOperations";
 // if module in the tsconfig file set to: "module": "es2022", then ollama library import doesn't work
 const main = async () => {
   const textContext = await readFileContent("test/notes/Sieć Neuronowa.md");
-  writeFlashcards(textContext, "local");
+  const flashcards = await writeFlashcards(textContext, "remote");
+  writeFlashcardsToJsonFile("responses/response.json", flashcards);
+  writeToTextFile(
+    createTextImportableToAnki(flashcards),
+    "responses/response.txt"
+  );
 };
 
 main();

@@ -1,12 +1,14 @@
 import ollama from "ollama";
 import {
   readFileContent,
-  writeToJsonFile,
-  createTextImportableToAnki,
-  writeToTextFile,
+  convertResponseToFlashcards,
 } from "./utils/fileOperations";
+import { Flashcards } from "./@types/flashcards";
 
-async function writeFlashcardsOllama(model: string, textContext: string) {
+async function writeFlashcardsOllama(
+  model: string,
+  textContext: string
+): Promise<Flashcards> {
   const instructions = await readFileContent(
     "src/prompts/generate_flashcards_json.txt"
   );
@@ -16,14 +18,7 @@ async function writeFlashcardsOllama(model: string, textContext: string) {
     messages: [{ role: "user", content: instructions + textContext }],
   });
 
-  writeToJsonFile("src/responses/response", response.message.content).then(
-    async () => {
-      const ankiDeck = await createTextImportableToAnki(
-        "src/responses/response.json"
-      );
-      writeToTextFile("src/responses/response", ankiDeck);
-    }
-  );
+  return convertResponseToFlashcards(response.message.content);
 }
 
 export default writeFlashcardsOllama;

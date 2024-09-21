@@ -1,8 +1,15 @@
 import OpenAI from "openai";
-import { readFileContent, writeToJsonFile } from "./utils/fileOperations";
+import {
+  convertResponseToFlashcards,
+  readFileContent,
+} from "./utils/fileOperations";
+import { Flashcards } from "./@types/flashcards";
 const openai = new OpenAI();
 
-async function writeFlashcardsOpenAi(model: string, textContext: string) {
+async function writeFlashcardsOpenAi(
+  model: string,
+  textContext: string
+): Promise<Flashcards> {
   const instructions = await readFileContent(
     "src/prompts/generate_flashcards_json.txt"
   );
@@ -18,8 +25,9 @@ async function writeFlashcardsOpenAi(model: string, textContext: string) {
   });
   const response = completion.choices[0].message.content;
   if (response) {
-    writeToJsonFile("src/responses/response", response);
+    return convertResponseToFlashcards(response);
   }
+  throw Error("Failed to generate flashcards with Open AI");
 }
 
 export default writeFlashcardsOpenAi;
