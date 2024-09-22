@@ -1,11 +1,11 @@
-import { Flashcards } from "./@types/flashcards";
+import { Flashcard } from "./@types/flashcards";
 import writeFlashcardsOllama from "./writeFlashcardsOllama";
 import writeFlashcardsOpenAi from "./writeFlashcardsOpenAi";
 
 async function writeFlashcards(
   textContext: string,
   type: "local" | "remote"
-): Promise<Flashcards> {
+): Promise<Flashcard[]> {
   if (type === "local") {
     return writeFlashcardsOllama("gemma2:27b", textContext);
   } else if (type === "remote") {

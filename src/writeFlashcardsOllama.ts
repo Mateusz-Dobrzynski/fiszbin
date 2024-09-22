@@ -3,12 +3,12 @@ import {
   readFileContent,
   convertResponseToFlashcards,
 } from "./utils/fileOperations";
-import { Flashcards } from "./@types/flashcards";
+import { Flashcard } from "./@types/flashcards";
 
 async function writeFlashcardsOllama(
   model: string,
   textContext: string
-): Promise<Flashcards> {
+): Promise<Flashcard[]> {
   const instructions = await readFileContent(
     "src/prompts/generate_flashcards_json.txt"
   );

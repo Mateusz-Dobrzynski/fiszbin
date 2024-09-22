@@ -3,13 +3,13 @@ import {
   convertResponseToFlashcards,
   readFileContent,
 } from "./utils/fileOperations";
-import { Flashcards } from "./@types/flashcards";
+import { Flashcard } from "./@types/flashcards";
 const openai = new OpenAI();
 
 async function writeFlashcardsOpenAi(
   model: string,
   textContext: string
-): Promise<Flashcards> {
+): Promise<Flashcard[]> {
   const instructions = await readFileContent(
     "src/prompts/generate_flashcards_json.txt"
   );

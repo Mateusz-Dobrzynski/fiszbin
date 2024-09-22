@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
-import { Flashcard, Flashcards } from "../@types/flashcards";
 import { assert } from "console";
+import { Flashcard } from "../@types/flashcards";
 
 async function readFileContent(filePath: string): Promise<string> {
   try {
@@ -21,7 +21,7 @@ function convertResponseToJson(data: string): JSON[] {
   }
 }
 
-function convertResponseToFlashcards(aiResponse: string): Flashcards {
+function convertResponseToFlashcards(aiResponse: string): Flashcard[] {
   const json = convertResponseToJson(aiResponse);
   const flashcards = [];
   for (const element of json) {
@@ -43,7 +43,7 @@ function convertJsonToFlashcard(json: JSON): Flashcard {
 
 async function writeFlashcardsToJsonFile(
   filePath: string,
-  flashcards: Flashcards
+  flashcards: Flashcard[]
 ): Promise<void> {
   try {
     await fs.writeFile(filePath, JSON.stringify(flashcards, null, 2), "utf-8");
@@ -64,7 +64,7 @@ async function writeToTextFile(filePath: string, data: string): Promise<void> {
   }
 }
 
-function createTextImportableToAnki(flashcards: Flashcards): string {
+function createTextImportableToAnki(flashcards: Flashcard[]): string {
   try {
     let ankiDeck = "";
     for (const flashcard of flashcards) {

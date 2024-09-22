@@ -3,6 +3,4 @@ type Flashcard = {
   answer: string;
 };
 
-type Flashcards = Flashcard[];
-
-export type { Flashcard, Flashcards };
+export type { Flashcard };
