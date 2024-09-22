@@ -1,11 +1,17 @@
+import { Flashcard } from "./@types/flashcards";
 import writeFlashcardsOllama from "./writeFlashcardsOllama";
+import writeFlashcardsOpenAi from "./writeFlashcardsOpenAi";
 
-async function writeFlashcards(textContext: string, type: "local" | "remote") {
+async function writeFlashcards(
+  textContext: string,
+  type: "local" | "remote"
+): Promise<Flashcard[]> {
   if (type === "local") {
-    writeFlashcardsOllama("gemma2:27b", textContext);
+    return writeFlashcardsOllama("gemma2:27b", textContext);
   } else if (type === "remote") {
-    // TODO implement the remote openai api version
+    return writeFlashcardsOpenAi("gpt-4o-mini", textContext);
   }
+  throw Error("Could not determine LLM type");
 }
 
 export default writeFlashcards;

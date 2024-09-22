@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
-import path from "path";
+import { assert } from "console";
+import { Flashcard } from "../@types/flashcards";
 
 async function readFileContent(filePath: string): Promise<string> {
   try {
@@ -11,7 +12,7 @@ async function readFileContent(filePath: string): Promise<string> {
   }
 }
 
-function convertStringToJson(data: string): any {
+function convertResponseToJson(data: string): JSON[] {
   try {
     return JSON.parse(data);
   } catch (error) {
@@ -20,46 +21,60 @@ function convertStringToJson(data: string): any {
   }
 }
 
-async function writeToJsonFile(filePath: string, data: string): Promise<void> {
+function convertResponseToFlashcards(aiResponse: string): Flashcard[] {
+  const json = convertResponseToJson(aiResponse);
+  const flashcards = [];
+  for (const element of json) {
+    try {
+      flashcards.push(convertJsonToFlashcard(element));
+    } catch {
+      continue;
+    }
+  }
+  return flashcards;
+}
+
+function convertJsonToFlashcard(json: JSON): Flashcard {
+  const keys = Object.keys(json);
+  assert(keys.includes("question"));
+  assert(keys.includes("answer"));
+  return json as unknown as Flashcard;
+}
+
+async function writeFlashcardsToJsonFile(
+  filePath: string,
+  flashcards: Flashcard[]
+): Promise<void> {
   try {
-    const jsonData = convertStringToJson(data);
-    await fs.writeFile(
-      filePath + ".json",
-      JSON.stringify(jsonData, null, 2),
-      "utf-8"
-    );
-    console.log(`Response written successfully to ${filePath}.json`);
+    await fs.writeFile(filePath, JSON.stringify(flashcards, null, 2), "utf-8");
+    console.log(`Response written successfully to ${filePath}`);
   } catch (error) {
     console.error("Error while saving as JSON:", error);
-    console.log("Trying to save as text instead...");
-    writeToTextFile(filePath, data);
+    throw error;
   }
 }
 
 async function writeToTextFile(filePath: string, data: string): Promise<void> {
   try {
-    await fs.writeFile(filePath + ".txt", data, "utf-8");
-    console.log(`Response written successfully to ${filePath}.txt`);
+    await fs.writeFile(filePath, data, "utf-8");
+    console.log(`Text written successfully to ${filePath}`);
   } catch (error) {
     console.error("Error writing file:", error);
     throw error;
   }
 }
 
-async function createTextImportableToAnki(filePath: string): Promise<string> {
+function createTextImportableToAnki(flashcards: Flashcard[]): string {
   try {
-    const absolutePath = path.resolve(filePath);
-    const fileContent = await fs.readFile(absolutePath, "utf-8");
-    const jsonData = JSON.parse(fileContent);
     let ankiDeck = "";
-    for (const item of jsonData) {
-      if (item.question && item.answer) {
-        ankiDeck += item.question + ";" + item.answer + "\n";
+    for (const flashcard of flashcards) {
+      if (flashcard.question && flashcard.answer) {
+        ankiDeck += flashcard.question + ";" + flashcard.answer + "\n";
       }
     }
     return ankiDeck;
   } catch (error) {
-    console.error("Error converting to Anki deck:", error);
+    console.error("Error while compiling an importable Anki text:", error);
     throw error;
   }
 }
@@ -67,6 +82,8 @@ async function createTextImportableToAnki(filePath: string): Promise<string> {
 export {
   readFileContent,
   writeToTextFile,
-  writeToJsonFile,
+  writeFlashcardsToJsonFile,
   createTextImportableToAnki,
+  convertResponseToJson,
+  convertResponseToFlashcards,
 };
