@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import { assert } from "console";
-import { Flashcard } from "../@types/flashcards";
+import { Flashcard } from "@/types/flashcard";
 
 async function readFileContent(filePath: string): Promise<string> {
   try {

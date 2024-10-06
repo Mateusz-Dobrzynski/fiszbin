@@ -3,7 +3,7 @@ import {
   readFileContent,
   convertResponseToFlashcards,
 } from "./utils/fileOperations";
-import { Flashcard } from "./@types/flashcards";
+import { Flashcard } from "./types/flashcard";
 
 async function writeFlashcardsOllama(
   model: string,

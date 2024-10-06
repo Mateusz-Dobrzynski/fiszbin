@@ -1,4 +1,4 @@
-import { Flashcard } from "./@types/flashcards";
+import { Flashcard } from "./types/flashcard";
 import writeFlashcardsOllama from "./writeFlashcardsOllama";
 import writeFlashcardsOpenAi from "./writeFlashcardsOpenAi";
 
