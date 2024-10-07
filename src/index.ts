@@ -5,6 +5,8 @@ import {
   writeFlashcardsToJsonFile,
   writeToTextFile,
 } from "./utils/fileOperations";
+import { ankiConnectHealthcheck, bulkSendToAnki } from "./ankiConnect";
+import { Flashcard } from "./types/flashcard";
 
 // This is the main function that will be called to generate the flashcards
 // The first argument is the model name, the second argument is the path to the text content
@@ -19,13 +21,11 @@ import {
 // If done so, it causes an error in the current setup
 // if module in the tsconfig file set to: "module": "es2022", then ollama library import doesn't work
 const main = async () => {
+  await ankiConnectHealthcheck();
   const textContext = await readFileContent("test/notes/Sieć Neuronowa.md");
   const flashcards = await writeFlashcards(textContext, "remote");
-  writeFlashcardsToJsonFile("src/responses/response.json", flashcards);
-  writeToTextFile(
-    "src/responses/response.txt",
-    createTextImportableToAnki(flashcards)
-  );
+  flashcards.forEach((flashcard) => console.log(flashcard));
+  await bulkSendToAnki(flashcards);
 };
 
 main();

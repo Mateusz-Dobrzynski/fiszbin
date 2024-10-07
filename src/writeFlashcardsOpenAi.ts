@@ -3,7 +3,7 @@ import {
   convertResponseToFlashcards,
   readFileContent,
 } from "./utils/fileOperations";
-import { Flashcard } from "./@types/flashcards";
+import { Flashcard } from "./types/flashcard";
 const openai = new OpenAI();
 
 async function writeFlashcardsOpenAi(
