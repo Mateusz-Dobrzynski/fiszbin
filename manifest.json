@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-fiszbin",
+  "name": "Fiszbin",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Flashcards made easy",
+  "author": "Mateusz Dobrzyński & Jakub Madejczyk",
+  "authorUrl": "https://github.com/Mateusz-Dobrzynski/fiszbin",
+  "isDesktopOnly": false
+}

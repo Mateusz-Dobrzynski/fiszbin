@@ -1,16 +1,17 @@
-type AnkiConfig = {
+interface FiszbinSettings {
+  apiKey: string;
   url: string;
   deckName: string;
   model: AnkiModel;
   password?: string;
   ankiConnectVersion: number;
-};
+}
 
 const readConfig = () => {
   // TO-DO: implement reading a config
   // possibly to be implemented when integrating with Obsidian
   // (it has its own way of handling settings)
-  return defaultConfig;
+  return "";
 };
 
 type AnkiModel = {
@@ -31,14 +32,5 @@ const defaultModel: AnkiModel = {
   ],
 };
 
-const defaultConfig: AnkiConfig = {
-  url: "http://127.0.0.1:8765",
-  deckName: "Fiszbin",
-  model: defaultModel,
-  password: undefined,
-  ankiConnectVersion: 6,
-};
-
-export type { AnkiConfig };
-export default { defaultConfig };
-export { readConfig };
+export type { FiszbinSettings as AnkiConfig };
+export { readConfig, defaultModel };

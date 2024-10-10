@@ -4,7 +4,12 @@ import {
   readFileContent,
 } from "./utils/fileOperations";
 import { Flashcard } from "./types/flashcard";
-const openai = new OpenAI();
+// TO-DO: figure out how to safely store an API key
+// (probably load an env var somehow)
+const openai = new OpenAI({
+  apiKey: "",
+  dangerouslyAllowBrowser: true,
+});
 
 async function writeFlashcardsOpenAi(
   model: string,
