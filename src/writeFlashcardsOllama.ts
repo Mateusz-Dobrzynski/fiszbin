@@ -1,24 +1,25 @@
 import ollama from "ollama";
-import {
-  readFileContent,
-  convertResponseToFlashcards,
-} from "./utils/fileOperations";
-import { Flashcard } from "./types/types";
+import { convertResponseToFlashcards } from "./utils/fileOperations";
+import { FiszbinSettings, Flashcard } from "./types/types";
 
-async function writeFlashcardsOllama(
-  model: string,
-  textContext: string
-): Promise<Flashcard[]> {
-  const instructions = await readFileContent(
-    "src/prompts/generate_flashcards_json.txt"
-  );
+export class OllamaWriter {
+  settings: FiszbinSettings;
 
-  const response = await ollama.chat({
-    model: model,
-    messages: [{ role: "user", content: instructions + textContext }],
-  });
+  constructor(settings: FiszbinSettings) {
+    this.settings = settings;
+  }
 
-  return convertResponseToFlashcards(response.message.content);
+  async writeFlashcardsOllama(
+    model: string,
+    textContext: string
+  ): Promise<Flashcard[]> {
+    const instructions = this.writeFlashcardsOllama;
+
+    const response = await ollama.chat({
+      model: model,
+      messages: [{ role: "user", content: instructions + textContext }],
+    });
+
+    return convertResponseToFlashcards(response.message.content);
+  }
 }
-
-export default writeFlashcardsOllama;

@@ -1,10 +1,10 @@
-import { FiszbinSettings, Flashcard } from "./types/types";
-import writeFlashcardsOllama from "./writeFlashcardsOllama";
+import { FiszbinSettings, Flashcard, LLMConnectionType } from "./types/types";
+import { OllamaWriter } from "./writeFlashcardsOllama";
 import { OpenAiWriter } from "./writeFlashcardsOpenAi";
 
 export class FlashcardsWriter {
   settings: FiszbinSettings;
-  type: "local" | "remote";
+  type: LLMConnectionType;
 
   constructor(settings: FiszbinSettings) {
     this.settings = settings;
@@ -13,7 +13,10 @@ export class FlashcardsWriter {
 
   async writeFlashcards(textContext: string): Promise<Flashcard[]> {
     if (this.type === "local") {
-      return writeFlashcardsOllama("gemma2:27b", textContext);
+      return new OllamaWriter(this.settings).writeFlashcardsOllama(
+        "gemma2:27b",
+        textContext
+      );
     } else if (this.type === "remote") {
       return new OpenAiWriter(this.settings).writeFlashcardsOpenAi(
         "gpt-4o-mini",
