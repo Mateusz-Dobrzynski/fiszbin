@@ -1,17 +1,25 @@
-import { Flashcard } from "./types/flashcard";
+import { FiszbinSettings, Flashcard } from "./types/types";
 import writeFlashcardsOllama from "./writeFlashcardsOllama";
-import writeFlashcardsOpenAi from "./writeFlashcardsOpenAi";
+import { OpenAiWriter } from "./writeFlashcardsOpenAi";
 
-async function writeFlashcards(
-  textContext: string,
-  type: "local" | "remote"
-): Promise<Flashcard[]> {
-  if (type === "local") {
-    return writeFlashcardsOllama("gemma2:27b", textContext);
-  } else if (type === "remote") {
-    return writeFlashcardsOpenAi("gpt-4o-mini", textContext);
+export class FlashcardsWriter {
+  settings: FiszbinSettings;
+  type: "local" | "remote";
+
+  constructor(settings: FiszbinSettings) {
+    this.settings = settings;
+    this.type = settings.LLMConnectionType;
   }
-  throw Error("Could not determine LLM type");
-}
 
-export default writeFlashcards;
+  async writeFlashcards(textContext: string): Promise<Flashcard[]> {
+    if (this.type === "local") {
+      return writeFlashcardsOllama("gemma2:27b", textContext);
+    } else if (this.type === "remote") {
+      return new OpenAiWriter(this.settings).writeFlashcardsOpenAi(
+        "gpt-4o-mini",
+        textContext
+      );
+    }
+    throw Error("Could not determine LLM type");
+  }
+}

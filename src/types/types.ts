@@ -1,3 +1,8 @@
+type Flashcard = {
+  question: string;
+  answer: string;
+};
+
 interface FiszbinSettings {
   apiKey: string;
   url: string;
@@ -5,14 +10,9 @@ interface FiszbinSettings {
   model: AnkiModel;
   password?: string;
   ankiConnectVersion: number;
+  writeFlashcardsPrompt: string;
+  LLMConnectionType: LLMConnectionType;
 }
-
-const readConfig = () => {
-  // TO-DO: implement reading a config
-  // possibly to be implemented when integrating with Obsidian
-  // (it has its own way of handling settings)
-  return "";
-};
 
 type AnkiModel = {
   name: string;
@@ -32,5 +32,8 @@ const defaultModel: AnkiModel = {
   ],
 };
 
-export type { FiszbinSettings as AnkiConfig };
-export { readConfig, defaultModel };
+type LLMConnectionType = "remote" | "local";
+
+export type { Flashcard, LLMConnectionType, FiszbinSettings, AnkiModel };
+
+export { defaultModel };

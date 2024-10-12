@@ -8,95 +8,72 @@ import {
   PluginSettingTab,
   Setting,
 } from "obsidian";
-import { AnkiConfig, defaultModel } from "./types/ankiConfig";
-import writeFlashcards from "./writeFlashcards";
+import { defaultModel } from "./types/types";
+import { generate_flashcards_prompt } from "./prompts/generate_flashcards_json";
+import { FlashcardsWriter } from "./writeFlashcards";
+import { FiszbinSettings, LLMConnectionType } from "./types/types";
+import { AnkiConnect } from "./ankiConnect";
 
 // Remember to rename these classes and interfaces!
 
-const DEFAULT_SETTINGS: AnkiConfig = {
+const DEFAULT_SETTINGS: FiszbinSettings = {
   apiKey: "",
   url: "http://127.0.0.1:8765",
   deckName: "Fiszbin",
   model: defaultModel,
   password: undefined,
   ankiConnectVersion: 6,
+  writeFlashcardsPrompt: generate_flashcards_prompt,
+  LLMConnectionType: "remote",
 };
 
 export default class Fiszbin extends Plugin {
-  settings: AnkiConfig;
+  settings: FiszbinSettings;
 
   async onload() {
     await this.loadSettings();
+    const flashcardsWriter = new FlashcardsWriter(this.settings);
+    const ankiConnect = new AnkiConnect(this.settings);
 
-    // This creates an icon in the left ribbon.
-    const ribbonIconEl = this.addRibbonIcon(
-      "dice",
-      "Fiszbin",
-      (evt: MouseEvent) => {
-        // Called when the user clicks the icon.
-        new Notice("This is a notice!");
-      }
-    );
-    // Perform additional things with the ribbon
-    ribbonIconEl.addClass("my-plugin-ribbon-class");
+    if (!(await ankiConnect.ankiConnectHealthcheck())) {
+      new Notice("Fiszbin: Failed to connect to Anki Connect!");
+    }
 
-    // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-    const statusBarItemEl = this.addStatusBarItem();
-    statusBarItemEl.setText("Status Bar Text");
-
-    // This adds a simple command that can be triggered anywhere
     this.addCommand({
-      id: "create-flashcards-from-current-note",
+      id: "fiszbin-create-flashcards-from-current-note",
       name: "Create flashcards from current note",
-      callback: () => {
-        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+      editorCallback: async (editor: Editor, view: MarkdownView) => {
         if (!view) {
           return;
         }
-        const editor = view.editor;
         const file_content = editor.getValue();
-        const flashcards = writeFlashcards(file_content, "remote");
-        new TextModal(this.app, "test simple").open();
+        const flashcards = await flashcardsWriter.writeFlashcards(file_content);
+
+        let text = "";
+        flashcards.forEach((flashcard) => {
+          text += `${flashcard.question}:\t ${flashcard.answer}\n\n`;
+        });
+        new TextModal(this.app, text).open();
+        await new AnkiConnect(this.settings).bulkSendToAnki(flashcards);
       },
     });
-    // This adds an editor command that can perform some operation on the current editor instance
+
     this.addCommand({
-      id: "sample-editor-command",
-      name: "Sample editor command",
-      editorCallback: (editor: Editor, view: MarkdownView) => {
-        console.log(editor.getSelection());
-        editor.replaceSelection("Sample Editor Command");
-      },
-    });
-    // This adds a complex command that can check whether the current state of the app allows execution of the command
-    this.addCommand({
-      id: "open-sample-modal-complex",
-      name: "Open sample modal (complex)",
-      checkCallback: (checking: boolean) => {
-        // Conditions to check
-        const markdownView =
-          this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (markdownView) {
-          // If checking is true, we're simply "checking" if the command can be run.
-          // If checking is false, then we want to actually perform the operation.
-          if (!checking) {
-            new TextModal(this.app, "test").open();
-          }
-
-          // This command will only show up in Command Palette when the check function returns true
-          return true;
-        }
+      id: "fiszbin-create-flashcards-from-current-selection",
+      name: "Create flashcards from current selection",
+      editorCallback: async (editor: Editor, view: MarkdownView) => {
+        const selection = editor.getSelection();
+        const flashcards = await flashcardsWriter.writeFlashcards(selection);
+        let text = "";
+        flashcards.forEach((flashcard) => {
+          text += `${flashcard.question}:\t ${flashcard.answer}`;
+        });
+        new TextModal(this.app, text).open();
+        await new AnkiConnect(this.settings).bulkSendToAnki(flashcards);
       },
     });
 
-    // This adds a settings tab so the user can configure various aspects of the plugin
-    this.addSettingTab(new SampleSettingTab(this.app, this));
-
-    // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-    // Using this function will automatically remove the event listener when this plugin is disabled.
-    this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-      console.log("click", evt);
-    });
+    this.addSettingTab(new FiszbinSettingsTab(this.app, this));
 
     // When registering intervals, this function will automatically clear the interval when the plugin is disabled.
     this.registerInterval(
@@ -134,7 +111,7 @@ class TextModal extends Modal {
   }
 }
 
-class SampleSettingTab extends PluginSettingTab {
+class FiszbinSettingsTab extends PluginSettingTab {
   plugin: Fiszbin;
 
   constructor(app: App, plugin: Fiszbin) {
@@ -159,5 +136,29 @@ class SampleSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    new Setting(containerEl)
+      .setName("LLM connection type")
+      .setDesc("")
+      .addDropdown((component) => {
+        component
+          .addOption("local", "Local")
+          .addOption("remote", "Remote (OpenAI only)")
+          .setValue(this.plugin.settings.LLMConnectionType)
+          .onChange(async (value) => {
+            this.plugin.settings.LLMConnectionType = value as LLMConnectionType;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName("Open AI API Key")
+      .setDesc("If you're using remote connection, paste your API key here")
+      .addText((text) => {
+        text.setValue(this.plugin.settings.apiKey).onChange(async (value) => {
+          this.plugin.settings.apiKey = value;
+          await this.plugin.saveSettings();
+        });
+      });
   }
 }
