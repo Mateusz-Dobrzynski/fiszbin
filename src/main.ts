@@ -1,14 +1,14 @@
 import {
   App,
+  ButtonComponent,
   Editor,
-  MarkdownView,
   Modal,
   Notice,
   Plugin,
   PluginSettingTab,
   Setting,
 } from "obsidian";
-import { defaultModel } from "./types/types";
+import { defaultModel, Flashcard } from "./types/types";
 import { generate_flashcards_prompt } from "./prompts/generate_flashcards_json";
 import { FlashcardsWriter } from "./writeFlashcards";
 import { FiszbinSettings, LLMConnectionType } from "./types/types";
@@ -42,34 +42,37 @@ export default class Fiszbin extends Plugin {
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-note",
       name: "Create flashcards from current note",
-      editorCallback: async (editor: Editor, view: MarkdownView) => {
-        if (!view) {
-          return;
-        }
+      editorCallback: async (editor: Editor) => {
         const file_content = editor.getValue();
         const flashcards = await flashcardsWriter.writeFlashcards(file_content);
 
-        let text = "";
-        flashcards.forEach((flashcard) => {
-          text += `${flashcard.question}:\t ${flashcard.answer}\n\n`;
-        });
-        new TextModal(this.app, text).open();
-        await new AnkiConnect(this.settings).bulkSendToAnki(flashcards);
+        new FlashcardsModal(this.app, flashcards, ankiConnect).open();
       },
     });
 
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-selection",
       name: "Create flashcards from current selection",
-      editorCallback: async (editor: Editor, view: MarkdownView) => {
+      editorCallback: async (editor: Editor) => {
         const selection = editor.getSelection();
         const flashcards = await flashcardsWriter.writeFlashcards(selection);
-        let text = "";
-        flashcards.forEach((flashcard) => {
-          text += `${flashcard.question}:\t ${flashcard.answer}`;
-        });
-        new TextModal(this.app, text).open();
-        await new AnkiConnect(this.settings).bulkSendToAnki(flashcards);
+        new FlashcardsModal(this.app, flashcards, ankiConnect).open();
+      },
+    });
+
+    this.addCommand({
+      id: "test-flashcards-modal",
+      name: "Display flashcards modal (for testing)",
+      callback: () => {
+        new FlashcardsModal(
+          this.app,
+          [
+            { question: "Question 1", answer: "Answer 1" },
+            { question: "Question 2", answer: "Answer 2" },
+            { question: "Question 3", answer: "Answer 3" },
+          ],
+          ankiConnect
+        ).open();
       },
     });
 
@@ -92,22 +95,48 @@ export default class Fiszbin extends Plugin {
   }
 }
 
-class TextModal extends Modal {
-  text: string;
-
-  constructor(app: App, text: string) {
+class FlashcardsModal extends Modal {
+  flashcards: Flashcard[];
+  ankiConnect: AnkiConnect;
+  constructor(app: App, flashcards: Flashcard[], ankiConnect: AnkiConnect) {
     super(app);
-    this.text = text;
+    this.flashcards = flashcards;
+    this.setTitle("Edit your flashcards");
+    this.ankiConnect = ankiConnect;
   }
 
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.setText(this.text);
-  }
-
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
+  onOpen(): void {
+    // TO-DO: Create an input for defining the destination deck
+    this.flashcards.map((flashcard) => {
+      const setting = new Setting(this.contentEl);
+      setting.addTextArea((textArea) => {
+        textArea.setValue(flashcard.question).onChange((value) => {
+          flashcard.question = value;
+        });
+      });
+      setting.addTextArea((textArea) => {
+        textArea.setValue(flashcard.answer).onChange((value) => {
+          flashcard.answer = value;
+        });
+      });
+      // TO-DO: figure out a way to remove the
+      // horizontal lines that remain when a flashcard is deleted
+      setting.addButton((deleteButton) => {
+        deleteButton
+          .setButtonText("Delete")
+          .setIcon("trash")
+          .onClick(() => {
+            this.flashcards.remove(flashcard);
+            setting.controlEl.remove();
+          });
+      });
+    });
+    // TO-DO: create a button to add new rows
+    new ButtonComponent(this.contentEl)
+      .setButtonText("Send to Anki")
+      .onClick(() => {
+        this.ankiConnect.bulkSendToAnki(this.flashcards);
+      });
   }
 }
 
@@ -142,7 +171,7 @@ class FiszbinSettingsTab extends PluginSettingTab {
       .setDesc("")
       .addDropdown((component) => {
         component
-          .addOption("local", "Local")
+          .addOption("local", "Local (Ollama only)")
           .addOption("remote", "Remote (OpenAI only)")
           .setValue(this.plugin.settings.LLMConnectionType)
           .onChange(async (value) => {
