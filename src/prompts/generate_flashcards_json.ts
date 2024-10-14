@@ -1,4 +1,4 @@
-Create text-based flashcards to help students memorize information. \
+const generate_flashcards_prompt = `Create text-based flashcards to help students memorize information. \
 Flashcards need to be based on notes written in Wikipedia-like Markdown. \
 Flashcards have a front side with a question and a back side with the answer. \
 
@@ -39,6 +39,6 @@ For example:
 ]
 
 
-Start working now!
+Start working now!`;
 
-
+export { generate_flashcards_prompt };
