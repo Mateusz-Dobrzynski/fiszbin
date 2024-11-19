@@ -47,7 +47,12 @@ export default class Fiszbin extends Plugin {
         const file_content = editor.getValue();
         const flashcards = await flashcardsWriter.writeFlashcards(file_content);
 
-        new FlashcardsModal(this.app, flashcards, ankiConnect).open();
+        new FlashcardsModal(
+          this.app,
+          this.settings,
+          flashcards,
+          ankiConnect
+        ).open();
       },
     });
 
@@ -61,7 +66,12 @@ export default class Fiszbin extends Plugin {
         }
         const selection = editor.getSelection();
         const flashcards = await flashcardsWriter.writeFlashcards(selection);
-        new FlashcardsModal(this.app, flashcards, ankiConnect).open();
+        new FlashcardsModal(
+          this.app,
+          this.settings,
+          flashcards,
+          ankiConnect
+        ).open();
       },
     });
 
@@ -71,6 +81,7 @@ export default class Fiszbin extends Plugin {
       callback: () => {
         new FlashcardsModal(
           this.app,
+          this.settings,
           [
             { question: "Question 1", answer: "Answer 1" },
             { question: "Question 2", answer: "Answer 2" },
@@ -98,15 +109,63 @@ export default class Fiszbin extends Plugin {
 class FlashcardsModal extends Modal {
   flashcards: Flashcard[];
   ankiConnect: AnkiConnect;
-  constructor(app: App, flashcards: Flashcard[], ankiConnect: AnkiConnect) {
+  settings: FiszbinSettings;
+  deckName: string;
+  constructor(
+    app: App,
+    settings: FiszbinSettings,
+    flashcards: Flashcard[],
+    ankiConnect: AnkiConnect
+  ) {
     super(app);
     this.flashcards = flashcards;
     this.setTitle("Edit your flashcards");
     this.ankiConnect = ankiConnect;
+    this.settings = settings;
+    this.deckName = settings.deckName;
   }
 
   onOpen(): void {
-    // TO-DO: Create an input for defining the destination deck
+    const mainSetting = new Setting(this.contentEl);
+    mainSetting.addText((text) => {
+      text.setValue(this.settings.deckName).onChange((value) => {
+        this.deckName = value;
+      });
+    });
+    mainSetting.addButton((button) => {
+      button.setButtonText("New row").onClick(() => {
+        const setting = new Setting(this.contentEl);
+        const flashcard: Flashcard = {
+          question: "Question",
+          answer: "Answer",
+        };
+        setting.addTextArea((textArea) => {
+          textArea.setValue(flashcard.question).onChange((value) => {
+            flashcard.question = value;
+          });
+        });
+        setting.addTextArea((textArea) => {
+          textArea.setValue(flashcard.answer).onChange((value) => {
+            flashcard.answer = value;
+          });
+        });
+        setting.addButton((deleteButton) => {
+          deleteButton
+            .setButtonText("Delete")
+            .setIcon("trash")
+            .onClick(() => {
+              this.flashcards.remove(flashcard);
+              setting.settingEl.remove();
+            });
+        });
+      });
+    });
+    mainSetting.addButton((button) => {
+      button.setButtonText("Send to Anki").onClick(() => {
+        this.ankiConnect.bulkSendToAnki(this.flashcards, this.deckName);
+        this.close();
+      });
+    });
     this.flashcards.map((flashcard) => {
       const setting = new Setting(this.contentEl);
       setting.addTextArea((textArea) => {
@@ -129,13 +188,6 @@ class FlashcardsModal extends Modal {
           });
       });
     });
-    // TO-DO: create a button to add new rows
-    new ButtonComponent(this.contentEl)
-      .setButtonText("Send to Anki")
-      .onClick(() => {
-        this.ankiConnect.bulkSendToAnki(this.flashcards);
-        this.close();
-      });
   }
 }
 
@@ -164,6 +216,16 @@ class FiszbinSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    new Setting(containerEl)
+      .setName("Default deck")
+      .setDesc("By default, your flashcards will be sent to this deck")
+      .addText((text) => {
+        text.setValue(this.plugin.settings.deckName).onChange(async (value) => {
+          this.plugin.settings.deckName = value;
+          await this.plugin.saveSettings();
+        });
+      });
 
     new Setting(containerEl)
       .setName("LLM connection type")
