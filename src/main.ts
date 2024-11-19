@@ -1,20 +1,11 @@
-import {
-  App,
-  ButtonComponent,
-  Editor,
-  Modal,
-  Notice,
-  Plugin,
-  PluginSettingTab,
-  Setting,
-} from "obsidian";
-import { defaultModel, Flashcard } from "./types/types";
+import { Editor, Notice, Plugin } from "obsidian";
+import { defaultModel } from "./types/types";
 import { generate_flashcards_prompt } from "./prompts/generate_flashcards_json";
 import { FlashcardsWriter } from "./writeFlashcards";
-import { FiszbinSettings, LLMConnectionType } from "./types/types";
+import { FiszbinSettings } from "./types/types";
 import { AnkiConnect } from "./ankiConnect";
-
-// Remember to rename these classes and interfaces!
+import { FiszbinSettingsTab } from "./fiszbinSettingsTab";
+import { FlashcardsModal } from "./flashcardsModal";
 
 const DEFAULT_SETTINGS: FiszbinSettings = {
   apiKey: "",
@@ -26,6 +17,9 @@ const DEFAULT_SETTINGS: FiszbinSettings = {
   writeFlashcardsPrompt: generate_flashcards_prompt,
   LLMConnectionType: "remote",
 };
+
+const ANKI_CONNECT_ERROR_MESSAGE =
+  "Fiszbin: Failed to connect to Anki Connect!";
 
 export default class Fiszbin extends Plugin {
   settings: FiszbinSettings;
@@ -40,7 +34,7 @@ export default class Fiszbin extends Plugin {
       name: "Create flashcards from current note",
       editorCallback: async (editor: Editor) => {
         if (!(await ankiConnect.ankiConnectHealthcheck())) {
-          new Notice("Fiszbin: Failed to connect to Anki Connect!");
+          new Notice(ANKI_CONNECT_ERROR_MESSAGE);
           return;
         }
 
@@ -61,7 +55,7 @@ export default class Fiszbin extends Plugin {
       name: "Create flashcards from current selection",
       editorCallback: async (editor: Editor) => {
         if (!(await ankiConnect.ankiConnectHealthcheck())) {
-          new Notice("Fiszbin: Failed to connect to Anki Connect!");
+          new Notice(ANKI_CONNECT_ERROR_MESSAGE);
           return;
         }
         const selection = editor.getSelection();
@@ -103,152 +97,5 @@ export default class Fiszbin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
-  }
-}
-
-class FlashcardsModal extends Modal {
-  flashcards: Flashcard[];
-  ankiConnect: AnkiConnect;
-  settings: FiszbinSettings;
-  deckName: string;
-  constructor(
-    app: App,
-    settings: FiszbinSettings,
-    flashcards: Flashcard[],
-    ankiConnect: AnkiConnect
-  ) {
-    super(app);
-    this.flashcards = flashcards;
-    this.setTitle("Edit your flashcards");
-    this.ankiConnect = ankiConnect;
-    this.settings = settings;
-    this.deckName = settings.deckName;
-  }
-
-  onOpen(): void {
-    const mainSetting = new Setting(this.contentEl);
-    mainSetting.addText((text) => {
-      text.setValue(this.settings.deckName).onChange((value) => {
-        this.deckName = value;
-      });
-    });
-    mainSetting.addButton((button) => {
-      button.setButtonText("New row").onClick(() => {
-        const setting = new Setting(this.contentEl);
-        const flashcard: Flashcard = {
-          question: "Question",
-          answer: "Answer",
-        };
-        setting.addTextArea((textArea) => {
-          textArea.setValue(flashcard.question).onChange((value) => {
-            flashcard.question = value;
-          });
-        });
-        setting.addTextArea((textArea) => {
-          textArea.setValue(flashcard.answer).onChange((value) => {
-            flashcard.answer = value;
-          });
-        });
-        setting.addButton((deleteButton) => {
-          deleteButton
-            .setButtonText("Delete")
-            .setIcon("trash")
-            .onClick(() => {
-              this.flashcards.remove(flashcard);
-              setting.settingEl.remove();
-            });
-        });
-      });
-    });
-    mainSetting.addButton((button) => {
-      button.setButtonText("Send to Anki").onClick(() => {
-        this.ankiConnect.bulkSendToAnki(this.flashcards, this.deckName);
-        this.close();
-      });
-    });
-    this.flashcards.map((flashcard) => {
-      const setting = new Setting(this.contentEl);
-      setting.addTextArea((textArea) => {
-        textArea.setValue(flashcard.question).onChange((value) => {
-          flashcard.question = value;
-        });
-      });
-      setting.addTextArea((textArea) => {
-        textArea.setValue(flashcard.answer).onChange((value) => {
-          flashcard.answer = value;
-        });
-      });
-      setting.addButton((deleteButton) => {
-        deleteButton
-          .setButtonText("Delete")
-          .setIcon("trash")
-          .onClick(() => {
-            this.flashcards.remove(flashcard);
-            setting.settingEl.remove();
-          });
-      });
-    });
-  }
-}
-
-class FiszbinSettingsTab extends PluginSettingTab {
-  plugin: Fiszbin;
-
-  constructor(app: App, plugin: Fiszbin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-
-  display(): void {
-    const { containerEl } = this;
-
-    containerEl.empty();
-
-    new Setting(containerEl)
-      .setName("Anki Connect URL")
-      .setDesc("Configured in Anki")
-      .addText((text) =>
-        text
-          .setPlaceholder("http://127.0.0.1:8765")
-          .setValue(this.plugin.settings.url)
-          .onChange(async (value) => {
-            this.plugin.settings.url = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName("Default deck")
-      .setDesc("By default, your flashcards will be sent to this deck")
-      .addText((text) => {
-        text.setValue(this.plugin.settings.deckName).onChange(async (value) => {
-          this.plugin.settings.deckName = value;
-          await this.plugin.saveSettings();
-        });
-      });
-
-    new Setting(containerEl)
-      .setName("LLM connection type")
-      .setDesc("")
-      .addDropdown((component) => {
-        component
-          .addOption("local", "Local (Ollama only)")
-          .addOption("remote", "Remote (OpenAI only)")
-          .setValue(this.plugin.settings.LLMConnectionType)
-          .onChange(async (value) => {
-            this.plugin.settings.LLMConnectionType = value as LLMConnectionType;
-            await this.plugin.saveSettings();
-          });
-      });
-
-    new Setting(containerEl)
-      .setName("Open AI API Key")
-      .setDesc("If you're using a remote connection, paste your API key here")
-      .addText((text) => {
-        text.setValue(this.plugin.settings.apiKey).onChange(async (value) => {
-          this.plugin.settings.apiKey = value;
-          await this.plugin.saveSettings();
-        });
-      });
   }
 }
