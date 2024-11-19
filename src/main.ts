@@ -1,4 +1,10 @@
-import { Editor, Notice, Plugin } from "obsidian";
+import {
+  Editor,
+  MarkdownEditView,
+  MarkdownView,
+  Notice,
+  Plugin,
+} from "obsidian";
 import { defaultModel } from "./types/types";
 import { generate_flashcards_prompt } from "./prompts/generate_flashcards_json";
 import { FlashcardsWriter } from "./writeFlashcards";
@@ -32,14 +38,18 @@ export default class Fiszbin extends Plugin {
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-note",
       name: "Create flashcards from current note",
-      editorCallback: async (editor: Editor) => {
+      callback: async () => {
+        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view) {
+          return;
+        }
+        const fileContents = view.editor.getValue();
         if (!(await ankiConnect.ankiConnectHealthcheck())) {
           new Notice(ANKI_CONNECT_ERROR_MESSAGE);
           return;
         }
 
-        const file_content = editor.getValue();
-        const flashcards = await flashcardsWriter.writeFlashcards(file_content);
+        const flashcards = await flashcardsWriter.writeFlashcards(fileContents);
 
         new FlashcardsModal(
           this.app,
