@@ -35,14 +35,15 @@ export default class Fiszbin extends Plugin {
     const flashcardsWriter = new FlashcardsWriter(this.settings);
     const ankiConnect = new AnkiConnect(this.settings);
 
-    if (!(await ankiConnect.ankiConnectHealthcheck())) {
-      new Notice("Fiszbin: Failed to connect to Anki Connect!");
-    }
-
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-note",
       name: "Create flashcards from current note",
       editorCallback: async (editor: Editor) => {
+        if (!(await ankiConnect.ankiConnectHealthcheck())) {
+          new Notice("Fiszbin: Failed to connect to Anki Connect!");
+          return;
+        }
+
         const file_content = editor.getValue();
         const flashcards = await flashcardsWriter.writeFlashcards(file_content);
 
@@ -54,6 +55,10 @@ export default class Fiszbin extends Plugin {
       id: "fiszbin-create-flashcards-from-current-selection",
       name: "Create flashcards from current selection",
       editorCallback: async (editor: Editor) => {
+        if (!(await ankiConnect.ankiConnectHealthcheck())) {
+          new Notice("Fiszbin: Failed to connect to Anki Connect!");
+          return;
+        }
         const selection = editor.getSelection();
         const flashcards = await flashcardsWriter.writeFlashcards(selection);
         new FlashcardsModal(this.app, flashcards, ankiConnect).open();
@@ -77,11 +82,6 @@ export default class Fiszbin extends Plugin {
     });
 
     this.addSettingTab(new FiszbinSettingsTab(this.app, this));
-
-    // When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-    this.registerInterval(
-      window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-    );
   }
 
   onunload() {}
@@ -119,15 +119,13 @@ class FlashcardsModal extends Modal {
           flashcard.answer = value;
         });
       });
-      // TO-DO: figure out a way to remove the
-      // horizontal lines that remain when a flashcard is deleted
       setting.addButton((deleteButton) => {
         deleteButton
           .setButtonText("Delete")
           .setIcon("trash")
           .onClick(() => {
             this.flashcards.remove(flashcard);
-            setting.controlEl.remove();
+            setting.settingEl.remove();
           });
       });
     });
@@ -136,6 +134,7 @@ class FlashcardsModal extends Modal {
       .setButtonText("Send to Anki")
       .onClick(() => {
         this.ankiConnect.bulkSendToAnki(this.flashcards);
+        this.close();
       });
   }
 }
@@ -182,7 +181,7 @@ class FiszbinSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Open AI API Key")
-      .setDesc("If you're using remote connection, paste your API key here")
+      .setDesc("If you're using a remote connection, paste your API key here")
       .addText((text) => {
         text.setValue(this.plugin.settings.apiKey).onChange(async (value) => {
           this.plugin.settings.apiKey = value;
