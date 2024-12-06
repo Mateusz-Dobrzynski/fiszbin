@@ -1,10 +1,4 @@
-import {
-  Editor,
-  MarkdownEditView,
-  MarkdownView,
-  Notice,
-  Plugin,
-} from "obsidian";
+import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
 import { defaultModel } from "./types/types";
 import { generate_flashcards_prompt } from "./prompts/generate_flashcards_json";
 import { FlashcardsWriter } from "./writeFlashcards";
@@ -49,6 +43,7 @@ export default class Fiszbin extends Plugin {
           return;
         }
 
+        new Notice(`Writing flashcards from "${view.file?.name}"`);
         const flashcards = await flashcardsWriter.writeFlashcards(fileContents);
 
         new FlashcardsModal(
@@ -69,6 +64,9 @@ export default class Fiszbin extends Plugin {
           return;
         }
         const selection = editor.getSelection();
+        new Notice(
+          `Writing flashcards from "${selection.substring(0, 15)}..."`
+        );
         const flashcards = await flashcardsWriter.writeFlashcards(selection);
         new FlashcardsModal(
           this.app,

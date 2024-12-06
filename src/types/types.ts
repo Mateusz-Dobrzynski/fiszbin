@@ -27,7 +27,7 @@ const defaultModel: AnkiModel = {
     {
       Name: "Fiszbin",
       Front: "{{question}}",
-      Back: "{{answer}}",
+      Back: "{{question}}<hr>{{answer}}",
     },
   ],
 };

@@ -9,6 +9,14 @@ Here are your rules:
 #The question must be specific and prompt a student to think of an answer.
 #The answer must be based solely on the note provided.
 #The flashcard must be in the same language as the note provided.
+#Markdown syntax must me converted to HTML syntax
+Examples:
+_italic_ should be converted to <i>italic</i>
+- a list
+should be converted to
+<ul>
+<li>a list</li>
+</ul>
 """
 
 List flashcards in a JSON format, like follows:

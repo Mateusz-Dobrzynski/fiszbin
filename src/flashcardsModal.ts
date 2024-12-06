@@ -35,10 +35,12 @@ export class FlashcardsModal extends Modal {
     mainSetting.addButton((button) => {
       button.setButtonText("New row").onClick(() => {
         const setting = new Setting(this.contentEl);
+        setting.setClass("fiszbin_flashcard_rows");
         const flashcard: Flashcard = {
           question: "Question",
           answer: "Answer",
         };
+        this.flashcards.push(flashcard);
         setting.addTextArea((textArea) => {
           textArea.setValue(flashcard.question).onChange((value) => {
             flashcard.question = value;
@@ -72,7 +74,7 @@ export class FlashcardsModal extends Modal {
     // Rows including generated flashcards
     this.flashcards.map((flashcard) => {
       const setting = new Setting(this.contentEl);
-      setting.addTextArea((textArea) => {
+      setting.setClass("fiszbin_flashcard_rows").addTextArea((textArea) => {
         textArea.setValue(flashcard.question).onChange((value) => {
           flashcard.question = value;
         });
