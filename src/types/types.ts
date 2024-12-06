@@ -12,6 +12,7 @@ interface FiszbinSettings {
   ankiConnectVersion: number;
   writeFlashcardsPrompt: string;
   LLMConnectionType: LLMConnectionType;
+  rememberDeck: boolean;
 }
 
 type AnkiModel = {

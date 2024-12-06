@@ -1,17 +1,20 @@
 import { App, Modal, Setting } from "obsidian";
 import { AnkiConnect } from "./ankiConnect";
 import { FiszbinSettings, Flashcard } from "./types/types";
+import Fiszbin from "./main";
 
 export class FlashcardsModal extends Modal {
   flashcards: Flashcard[];
   ankiConnect: AnkiConnect;
   settings: FiszbinSettings;
   deckName: string;
+  plugin: Fiszbin;
   constructor(
     app: App,
     settings: FiszbinSettings,
     flashcards: Flashcard[],
-    ankiConnect: AnkiConnect
+    ankiConnect: AnkiConnect,
+    plugin: Fiszbin
   ) {
     super(app);
     this.flashcards = flashcards;
@@ -19,6 +22,7 @@ export class FlashcardsModal extends Modal {
     this.ankiConnect = ankiConnect;
     this.settings = settings;
     this.deckName = settings.deckName;
+    this.plugin = plugin;
   }
 
   onOpen(): void {
@@ -26,8 +30,12 @@ export class FlashcardsModal extends Modal {
 
     // Target deck name input
     mainSetting.addText((text) => {
-      text.setValue(this.settings.deckName).onChange((value) => {
+      text.setValue(this.settings.deckName).onChange(async (value) => {
         this.deckName = value;
+        if (this.settings.rememberDeck) {
+          this.settings.deckName = value;
+          await this.plugin.saveSettings();
+        }
       });
     });
 

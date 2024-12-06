@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS: FiszbinSettings = {
   ankiConnectVersion: 6,
   writeFlashcardsPrompt: generate_flashcards_prompt,
   LLMConnectionType: "remote",
+  rememberDeck: false,
 };
 
 const ANKI_CONNECT_ERROR_MESSAGE =
@@ -50,7 +51,8 @@ export default class Fiszbin extends Plugin {
           this.app,
           this.settings,
           flashcards,
-          ankiConnect
+          ankiConnect,
+          this
         ).open();
       },
     });
@@ -72,7 +74,8 @@ export default class Fiszbin extends Plugin {
           this.app,
           this.settings,
           flashcards,
-          ankiConnect
+          ankiConnect,
+          this
         ).open();
       },
     });
@@ -89,7 +92,8 @@ export default class Fiszbin extends Plugin {
             { question: "Question 2", answer: "Answer 2" },
             { question: "Question 3", answer: "Answer 3" },
           ],
-          ankiConnect
+          ankiConnect,
+          this
         ).open();
       },
     });

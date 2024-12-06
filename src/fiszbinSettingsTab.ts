@@ -17,7 +17,7 @@ export class FiszbinSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Anki Connect URL")
-      .setDesc("Configured in Anki")
+      .setDesc("Configured in Anki.")
       .addText((text) =>
         text
           .setPlaceholder("http://127.0.0.1:8765")
@@ -30,10 +30,22 @@ export class FiszbinSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default deck")
-      .setDesc("By default, your flashcards will be sent to this deck")
+      .setDesc("By default, your flashcards will be sent to this deck.")
       .addText((text) => {
         text.setValue(this.plugin.settings.deckName).onChange(async (value) => {
           this.plugin.settings.deckName = value;
+          await this.plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("Remember deck name")
+      .setDesc(
+        "If enabled, changing a destination deck in the flashcards modal will override the default deck setting."
+      )
+      .addToggle((toggle) => {
+        toggle.onChange(async (value) => {
+          this.plugin.settings.rememberDeck = value;
           await this.plugin.saveSettings();
         });
       });
@@ -54,7 +66,7 @@ export class FiszbinSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Open AI API Key")
-      .setDesc("If you're using a remote connection, paste your API key here")
+      .setDesc("If you're using a remote connection, paste your API key here.")
       .addText((text) => {
         text.setValue(this.plugin.settings.apiKey).onChange(async (value) => {
           this.plugin.settings.apiKey = value;
