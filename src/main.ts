@@ -19,9 +19,6 @@ const DEFAULT_SETTINGS: FiszbinSettings = {
   rememberDeck: false,
 };
 
-const ANKI_CONNECT_ERROR_MESSAGE =
-  "Fiszbin: Failed to connect to Anki Connect!";
-
 export default class Fiszbin extends Plugin {
   settings: FiszbinSettings;
 
@@ -33,39 +30,39 @@ export default class Fiszbin extends Plugin {
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-note",
       name: "Create flashcards from current note",
-      callback: async () => {
-        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!view) {
-          return;
-        }
-        const fileContents = view.editor.getValue();
-        if (!(await ankiConnect.ankiConnectHealthcheck())) {
-          new Notice(ANKI_CONNECT_ERROR_MESSAGE);
-          return;
-        }
-
-        new Notice(`Writing flashcards from "${view.file?.name}"`);
-        const flashcards = await flashcardsWriter.writeFlashcards(fileContents);
-
-        new FlashcardsModal(
-          this.app,
-          this.settings,
-          flashcards,
-          ankiConnect,
-          this
-        ).open();
-      },
+      callback: async () => writeFlashcardsFromFile(),
     });
+
+    const writeFlashcardsFromFile = async () => {
+      const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+      if (!view) {
+        return;
+      }
+      const fileContents = view.editor.getValue();
+
+      new Notice(`Writing flashcards from "${view.file?.name}"`);
+      const flashcards = await flashcardsWriter.writeFlashcards(fileContents);
+
+      new FlashcardsModal(
+        this.app,
+        this.settings,
+        flashcards,
+        ankiConnect,
+        this
+      ).open();
+    };
 
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-selection",
       name: "Create flashcards from current selection",
       editorCallback: async (editor: Editor) => {
-        if (!(await ankiConnect.ankiConnectHealthcheck())) {
-          new Notice(ANKI_CONNECT_ERROR_MESSAGE);
+        const selection = editor.getSelection();
+        console.log(selection);
+        if (selection == "") {
+          console.log("bajojajo");
+          await writeFlashcardsFromFile();
           return;
         }
-        const selection = editor.getSelection();
         new Notice(
           `Writing flashcards from "${selection.substring(0, 15)}..."`
         );
