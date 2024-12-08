@@ -52,30 +52,43 @@ export default class Fiszbin extends Plugin {
       ).open();
     };
 
+    const writeFlashcardsFromSelection = async (editor: Editor) => {
+      const selection = editor.getSelection();
+      if (selection == "") {
+        await writeFlashcardsFromFile();
+        return;
+      }
+      new Notice(`Writing flashcards from "${selection.substring(0, 15)}..."`);
+      const flashcards = await flashcardsWriter.writeFlashcards(selection);
+      new FlashcardsModal(
+        this.app,
+        this.settings,
+        flashcards,
+        ankiConnect,
+        this
+      ).open();
+    };
+
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-selection",
       name: "Create flashcards from current selection",
       editorCallback: async (editor: Editor) => {
-        const selection = editor.getSelection();
-        console.log(selection);
-        if (selection == "") {
-          console.log("bajojajo");
-          await writeFlashcardsFromFile();
-          return;
-        }
-        new Notice(
-          `Writing flashcards from "${selection.substring(0, 15)}..."`
-        );
-        const flashcards = await flashcardsWriter.writeFlashcards(selection);
-        new FlashcardsModal(
-          this.app,
-          this.settings,
-          flashcards,
-          ankiConnect,
-          this
-        ).open();
+        await writeFlashcardsFromSelection(editor);
       },
     });
+
+    this.registerEvent(
+      this.app.workspace.on("editor-menu", (menu, editor, view) => {
+        menu.addItem((item) => {
+          item
+            .setTitle("Write flashcards from selection")
+            .setIcon("notebook-pen")
+            .onClick(async () => {
+              await writeFlashcardsFromSelection(editor);
+            });
+        });
+      })
+    );
 
     this.addCommand({
       id: "test-flashcards-modal",
