@@ -23,7 +23,7 @@ export class AnkiConnect {
     flashcards: Flashcard[],
     deckName?: string,
     modelName?: string
-  ): Promise<void> {
+  ): Promise<number[]> {
     if (deckName == undefined) {
       deckName = this.config.deckName;
     }
@@ -42,9 +42,10 @@ export class AnkiConnect {
         },
       };
     });
-    await this.ankiRequest("addNotes", {
+    const createdNotesId = await this.ankiRequest("addNotes", {
       notes: notes,
     });
+    return createdNotesId as number[];
   }
 
   async sendToAnki(
@@ -129,30 +130,32 @@ export class AnkiConnect {
     }
   }
 
-  async ankiRequest(action: string, params = {}): Promise<string | string[]> {
+  async ankiRequest(action: string, params = {}): Promise<any | any[]> {
     return new Promise(async (resolve, reject) => {
-      const config = this.config;
-      await fetch(config.url, {
-        method: "POST",
-        body: JSON.stringify({
-          version: config.ankiConnectVersion,
-          action: action,
-          params: params,
-        }),
-      })
-        .then((response) => {
-          return response.json();
-        })
-        .then((json) => {
-          const result = json.result;
-          const error = json.error;
-          if (error != null) {
-            reject(
-              `Failed to send request to Anki Connect:\n${error}\n${action}\n${params}`
-            );
-          }
-          resolve(result);
+      try {
+        const config = this.config;
+        const response = await fetch(config.url, {
+          method: "POST",
+          body: JSON.stringify({
+            version: config.ankiConnectVersion,
+            action: action,
+            params: params,
+          }),
         });
+        const json: any = await response.json();
+        const result = json.result;
+        const error = json.error;
+        if (error != null) {
+          reject(
+            `Failed to send a request to Anki Connect:\n${error}\n${action}\n${params}`
+          );
+        }
+        resolve(result);
+      } catch (error) {
+        reject(
+          `Failed to send a request to Anki Connect:\n${error}\n${action}\n${params}`
+        );
+      }
     });
   }
 }

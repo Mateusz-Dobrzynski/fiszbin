@@ -1,4 +1,4 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Modal, Notice, Setting } from "obsidian";
 import { AnkiConnect } from "./ankiConnect";
 import { FiszbinSettings, Flashcard } from "./types/types";
 import Fiszbin from "./main";
@@ -73,8 +73,24 @@ export class FlashcardsModal extends Modal {
 
     // Send to Anki Button
     mainSetting.addButton((button) => {
-      button.setButtonText("Send to Anki").onClick(() => {
-        this.ankiConnect.bulkSendToAnki(this.flashcards, this.deckName);
+      button.setButtonText("Send to Anki").onClick(async () => {
+        try {
+          if (!(await this.ankiConnect.ankiConnectHealthcheck())) {
+            new Notice(
+              "Failed to connect to Anki Connect. Make sure Anki is open and Anki Connect is configured"
+            );
+            return;
+          }
+          const createdNotesIds = await this.ankiConnect.bulkSendToAnki(
+            this.flashcards,
+            this.deckName
+          );
+          new Notice(
+            `${createdNotesIds.length} flashcards successfully sent to Anki`
+          );
+        } catch (error) {
+          new Notice(`Failed to send flashcards to Anki: ${error}`);
+        }
         this.close();
       });
     });
