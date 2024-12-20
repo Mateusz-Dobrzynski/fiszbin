@@ -1,0 +1,30 @@
+/*
+
+This CSS file will be included with your plugin, and
+available in the app when your plugin is enabled.
+
+If your plugin does not need CSS, delete this file.
+
+*/
+
+.fiszbin_flashcard_rows {
+  flex-direction: column;
+}
+
+.fiszbin_flashcard_rows {
+  width: 100%;
+}
+
+.fiszbin_flashcard_rows .setting-item-control {
+  width: 90%;
+}
+
+.fiszbin_flashcard_rows .setting-item-control textarea {
+  width: 45%;
+  min-height: 4rem;
+  max-height: 8rem;
+}
+
+.modal:has(.fiszbin_flashcard_rows) {
+  width: 70%;
+}

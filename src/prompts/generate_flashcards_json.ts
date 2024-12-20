@@ -1,4 +1,4 @@
-Create text-based flashcards to help students memorize information. \
+const generate_flashcards_prompt = `Create text-based flashcards to help students memorize information. \
 Flashcards need to be based on notes written in Wikipedia-like Markdown. \
 Flashcards have a front side with a question and a back side with the answer. \
 
@@ -9,6 +9,14 @@ Here are your rules:
 #The question must be specific and prompt a student to think of an answer.
 #The answer must be based solely on the note provided.
 #The flashcard must be in the same language as the note provided.
+#Markdown syntax must me converted to HTML syntax
+Examples:
+_italic_ should be converted to <i>italic</i>
+- a list
+should be converted to
+<ul>
+<li>a list</li>
+</ul>
 """
 
 List flashcards in a JSON format, like follows:
@@ -39,6 +47,6 @@ For example:
 ]
 
 
-Start working now!
+Start working now!`;
 
-
+export { generate_flashcards_prompt };
