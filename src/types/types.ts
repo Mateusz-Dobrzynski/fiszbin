@@ -13,6 +13,7 @@ interface FiszbinSettings {
   writeFlashcardsPrompt: string;
   LLMConnectionType: LLMConnectionType;
   rememberDeck: boolean;
+  automaticallyPresentNewCards: boolean;
 }
 
 type AnkiModel = {

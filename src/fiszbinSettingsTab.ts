@@ -51,6 +51,18 @@ export class FiszbinSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
+      .setName("Automatically present new flashcards")
+      .setDesc(
+        "Automatically display a modal with new flashcards, when they're ready."
+      )
+      .addToggle((toggle) => {
+        toggle.onChange(async (value) => {
+          this.plugin.settings.automaticallyPresentNewCards = value;
+          await this.plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
       .setName("LLM connection type")
       .setDesc("")
       .addDropdown((component) => {

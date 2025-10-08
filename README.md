@@ -6,7 +6,7 @@
 
 ### 1. Configure Anki Connect
 
-By default, Anki Connect blocks requests sent from origins other than `http://localhost`. For Fiszbin to function properly, you need to add `app://obsidian.md` to a whitelist found in `Tools > Add-ons > Anki Connect`.
+By default, Anki Connect blocks requests sent from origins other than `http://localhost`. For Fiszbin to function properly, add `app://obsidian.md` to a whitelist found in `Tools > Add-ons > Anki Connect`.
 
 ```
 "webCorsOriginList": [

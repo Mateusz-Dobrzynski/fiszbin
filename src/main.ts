@@ -1,5 +1,5 @@
 import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
-import { defaultModel } from "./types/types";
+import { defaultModel, Flashcard } from "./types/types";
 import { generate_flashcards_prompt } from "./prompts/generate_flashcards_json";
 import { FlashcardsWriter } from "./writeFlashcards";
 import { FiszbinSettings } from "./types/types";
@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS: FiszbinSettings = {
   writeFlashcardsPrompt: generate_flashcards_prompt,
   LLMConnectionType: "remote",
   rememberDeck: false,
+  automaticallyPresentNewCards: true,
 };
 
 export default class Fiszbin extends Plugin {
@@ -26,6 +27,7 @@ export default class Fiszbin extends Plugin {
     await this.loadSettings();
     const flashcardsWriter = new FlashcardsWriter(this.settings);
     const ankiConnect = new AnkiConnect(this.settings);
+    let pendingFlashcards: Flashcard[] = [];
 
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-note",
@@ -40,16 +42,30 @@ export default class Fiszbin extends Plugin {
       }
       const fileContents = view.editor.getValue();
 
-      new Notice(`Writing flashcards from "${view.file?.name}"`);
+      const fileName = view.file?.name || "file";
+      new Notice(`Writing flashcards from "${fileName}"`);
       const flashcards = await flashcardsWriter.writeFlashcards(fileContents);
 
-      new FlashcardsModal(
-        this.app,
-        this.settings,
-        flashcards,
-        ankiConnect,
-        this
-      ).open();
+      handleNewFlashcards(flashcards, fileName);
+    };
+
+    const handleNewFlashcards = async (
+      newFlashcards: Flashcard[],
+      source: string
+    ) => {
+      console.log(this.settings.automaticallyPresentNewCards);
+      pendingFlashcards = pendingFlashcards.concat(newFlashcards);
+      if (this.settings.automaticallyPresentNewCards) {
+        new FlashcardsModal(
+          this.app,
+          this.settings,
+          newFlashcards,
+          ankiConnect,
+          this
+        ).open();
+      } else {
+        new Notice(`${newFlashcards.length} from ${source} pending`);
+      }
     };
 
     const writeFlashcardsFromSelection = async (editor: Editor) => {
@@ -58,15 +74,10 @@ export default class Fiszbin extends Plugin {
         await writeFlashcardsFromFile();
         return;
       }
-      new Notice(`Writing flashcards from "${selection.substring(0, 15)}..."`);
+      const selectionStart = `${selection.substring(0, 15)}..."`;
+      new Notice(`Writing flashcards from ${selectionStart}`);
       const flashcards = await flashcardsWriter.writeFlashcards(selection);
-      new FlashcardsModal(
-        this.app,
-        this.settings,
-        flashcards,
-        ankiConnect,
-        this
-      ).open();
+      handleNewFlashcards(flashcards, selectionStart);
     };
 
     this.addCommand({
@@ -91,17 +102,13 @@ export default class Fiszbin extends Plugin {
     );
 
     this.addCommand({
-      id: "test-flashcards-modal",
-      name: "Display flashcards modal (for testing)",
+      id: "fiszbin-view-pending-flashcards",
+      name: "View pending flashcards",
       callback: () => {
         new FlashcardsModal(
           this.app,
           this.settings,
-          [
-            { question: "Question 1", answer: "Answer 1" },
-            { question: "Question 2", answer: "Answer 2" },
-            { question: "Question 3", answer: "Answer 3" },
-          ],
+          pendingFlashcards,
           ankiConnect,
           this
         ).open();
