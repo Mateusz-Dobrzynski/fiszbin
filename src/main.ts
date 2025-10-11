@@ -22,12 +22,12 @@ const DEFAULT_SETTINGS: FiszbinSettings = {
 
 export default class Fiszbin extends Plugin {
   settings: FiszbinSettings;
+  pendingFlashcards: Flashcard[] = [];
 
   async onload() {
     await this.loadSettings();
     const flashcardsWriter = new FlashcardsWriter(this.settings);
     const ankiConnect = new AnkiConnect(this.settings);
-    let pendingFlashcards: Flashcard[] = [];
 
     this.addCommand({
       id: "fiszbin-create-flashcards-from-current-note",
@@ -53,18 +53,15 @@ export default class Fiszbin extends Plugin {
       newFlashcards: Flashcard[],
       source: string
     ) => {
-      console.log(this.settings.automaticallyPresentNewCards);
-      pendingFlashcards = pendingFlashcards.concat(newFlashcards);
+      this.pendingFlashcards = this.pendingFlashcards.concat(newFlashcards);
       if (this.settings.automaticallyPresentNewCards) {
-        new FlashcardsModal(
-          this.app,
-          this.settings,
-          newFlashcards,
-          ankiConnect,
-          this
-        ).open();
+        new FlashcardsModal(this.app, this.settings, ankiConnect, this).open();
       } else {
-        new Notice(`${newFlashcards.length} from ${source} pending`);
+        new Notice(
+          `${newFlashcards.length} flashcard${
+            newFlashcards.length > 1 ? "s" : ""
+          } from ${source} pending`
+        );
       }
     };
 
@@ -105,13 +102,7 @@ export default class Fiszbin extends Plugin {
       id: "fiszbin-view-pending-flashcards",
       name: "View pending flashcards",
       callback: () => {
-        new FlashcardsModal(
-          this.app,
-          this.settings,
-          pendingFlashcards,
-          ankiConnect,
-          this
-        ).open();
+        new FlashcardsModal(this.app, this.settings, ankiConnect, this).open();
       },
     });
 

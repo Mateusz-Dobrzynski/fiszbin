@@ -4,7 +4,6 @@ import { FiszbinSettings, Flashcard } from "./types/types";
 import Fiszbin from "./main";
 
 export class FlashcardsModal extends Modal {
-  flashcards: Flashcard[];
   ankiConnect: AnkiConnect;
   settings: FiszbinSettings;
   deckName: string;
@@ -12,12 +11,10 @@ export class FlashcardsModal extends Modal {
   constructor(
     app: App,
     settings: FiszbinSettings,
-    flashcards: Flashcard[],
     ankiConnect: AnkiConnect,
     plugin: Fiszbin
   ) {
     super(app);
-    this.flashcards = flashcards;
     this.setTitle("Edit your flashcards");
     this.ankiConnect = ankiConnect;
     this.settings = settings;
@@ -48,7 +45,7 @@ export class FlashcardsModal extends Modal {
           question: "Question",
           answer: "Answer",
         };
-        this.flashcards.push(flashcard);
+        this.plugin.pendingFlashcards.push(flashcard);
         setting.addTextArea((textArea) => {
           textArea.setValue(flashcard.question).onChange((value) => {
             flashcard.question = value;
@@ -64,7 +61,7 @@ export class FlashcardsModal extends Modal {
             .setButtonText("Delete")
             .setIcon("trash")
             .onClick(() => {
-              this.flashcards.remove(flashcard);
+              this.plugin.pendingFlashcards.remove(flashcard);
               setting.settingEl.remove();
             });
         });
@@ -82,12 +79,13 @@ export class FlashcardsModal extends Modal {
             return;
           }
           const createdNotesIds = await this.ankiConnect.bulkSendToAnki(
-            this.flashcards,
+            this.plugin.pendingFlashcards,
             this.deckName
           );
           new Notice(
             `${createdNotesIds.length} flashcards successfully sent to Anki`
           );
+          this.plugin.pendingFlashcards = [];
         } catch (error) {
           new Notice(`Failed to send flashcards to Anki: ${error}`);
         }
@@ -96,7 +94,7 @@ export class FlashcardsModal extends Modal {
     });
 
     // Rows including generated flashcards
-    this.flashcards.map((flashcard) => {
+    this.plugin.pendingFlashcards.map((flashcard) => {
       const setting = new Setting(this.contentEl);
       setting.setClass("fiszbin_flashcard_rows").addTextArea((textArea) => {
         textArea.setValue(flashcard.question).onChange((value) => {
@@ -113,7 +111,7 @@ export class FlashcardsModal extends Modal {
           .setButtonText("Delete")
           .setIcon("trash")
           .onClick(() => {
-            this.flashcards.remove(flashcard);
+            this.plugin.pendingFlashcards.remove(flashcard);
             setting.settingEl.remove();
           });
       });
