@@ -21,8 +21,10 @@ If your plugin does not need CSS, delete this file.
 
 .fiszbin_flashcard_rows .setting-item-control textarea {
   width: 45%;
+  max-width: 45%;
+  min-width: 45%;
   min-height: 4rem;
-  max-height: 8rem;
+  max-height: 10rem;
 }
 
 .modal:has(.fiszbin_flashcard_rows) {

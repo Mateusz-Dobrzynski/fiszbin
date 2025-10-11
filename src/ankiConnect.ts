@@ -32,16 +32,20 @@ export class AnkiConnect {
     }
     await this.ensureDeckExists(deckName);
     await this.ensureModelExists(modelName);
-    const notes = flashcards.map((flashcard) => {
-      return {
-        deckName: deckName,
-        modelName: modelName,
-        fields: {
-          question: flashcard.question,
-          answer: flashcard.answer,
-        },
-      };
-    });
+    const notes = flashcards
+      .filter((flashcard) => {
+        return flashcard.question != "" && flashcard.question != "";
+      })
+      .map((flashcard) => {
+        return {
+          deckName: deckName,
+          modelName: modelName,
+          fields: {
+            question: flashcard.question,
+            answer: flashcard.answer,
+          },
+        };
+      });
     const createdNotesId = await this.ankiRequest("addNotes", {
       notes: notes,
     });

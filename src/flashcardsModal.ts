@@ -42,16 +42,18 @@ export class FlashcardsModal extends Modal {
         const setting = new Setting(this.contentEl);
         setting.setClass("fiszbin_flashcard_rows");
         const flashcard: Flashcard = {
-          question: "Question",
-          answer: "Answer",
+          question: "",
+          answer: "",
         };
         this.plugin.pendingFlashcards.push(flashcard);
         setting.addTextArea((textArea) => {
+          textArea.setPlaceholder("Question");
           textArea.setValue(flashcard.question).onChange((value) => {
             flashcard.question = value;
           });
         });
         setting.addTextArea((textArea) => {
+          textArea.setPlaceholder("Answer");
           textArea.setValue(flashcard.answer).onChange((value) => {
             flashcard.answer = value;
           });
@@ -65,6 +67,20 @@ export class FlashcardsModal extends Modal {
               setting.settingEl.remove();
             });
         });
+      });
+    });
+
+    // Clear all button
+    mainSetting.addButton((button) => {
+      button.setButtonText("Clear all").onClick(() => {
+        console.log(this.contentEl.children);
+        this.plugin.pendingFlashcards = [];
+        for (let i = this.contentEl.children.length; i > 0; i--) {
+          const element = this.contentEl.children.item(i);
+          if (element?.className == "setting-item fiszbin_flashcard_rows") {
+            element?.remove();
+          }
+        }
       });
     });
 
@@ -82,8 +98,16 @@ export class FlashcardsModal extends Modal {
             this.plugin.pendingFlashcards,
             this.deckName
           );
+
+          const createdNotesCount = createdNotesIds.length;
+          const emptyNotesNotice =
+            createdNotesCount != this.plugin.pendingFlashcards.length
+              ? ` ${
+                  this.plugin.pendingFlashcards.length - createdNotesCount
+                } empty flashcards were skipped`
+              : "";
           new Notice(
-            `${createdNotesIds.length} flashcards successfully sent to Anki`
+            `${createdNotesIds.length} flashcards successfully sent to Anki.${emptyNotesNotice}`
           );
           this.plugin.pendingFlashcards = [];
         } catch (error) {
