@@ -4,7 +4,6 @@ import { FiszbinSettings, Flashcard } from "./types/types";
 import Fiszbin from "./main";
 
 export class FlashcardsModal extends Modal {
-  flashcards: Flashcard[];
   ankiConnect: AnkiConnect;
   settings: FiszbinSettings;
   deckName: string;
@@ -12,12 +11,10 @@ export class FlashcardsModal extends Modal {
   constructor(
     app: App,
     settings: FiszbinSettings,
-    flashcards: Flashcard[],
     ankiConnect: AnkiConnect,
     plugin: Fiszbin
   ) {
     super(app);
-    this.flashcards = flashcards;
     this.setTitle("Edit your flashcards");
     this.ankiConnect = ankiConnect;
     this.settings = settings;
@@ -45,16 +42,18 @@ export class FlashcardsModal extends Modal {
         const setting = new Setting(this.contentEl);
         setting.setClass("fiszbin_flashcard_rows");
         const flashcard: Flashcard = {
-          question: "Question",
-          answer: "Answer",
+          question: "",
+          answer: "",
         };
-        this.flashcards.push(flashcard);
+        this.plugin.pendingFlashcards.push(flashcard);
         setting.addTextArea((textArea) => {
+          textArea.setPlaceholder("Question");
           textArea.setValue(flashcard.question).onChange((value) => {
             flashcard.question = value;
           });
         });
         setting.addTextArea((textArea) => {
+          textArea.setPlaceholder("Answer");
           textArea.setValue(flashcard.answer).onChange((value) => {
             flashcard.answer = value;
           });
@@ -64,10 +63,24 @@ export class FlashcardsModal extends Modal {
             .setButtonText("Delete")
             .setIcon("trash")
             .onClick(() => {
-              this.flashcards.remove(flashcard);
+              this.plugin.pendingFlashcards.remove(flashcard);
               setting.settingEl.remove();
             });
         });
+      });
+    });
+
+    // Clear all button
+    mainSetting.addButton((button) => {
+      button.setButtonText("Clear all").onClick(() => {
+        console.log(this.contentEl.children);
+        this.plugin.pendingFlashcards = [];
+        for (let i = this.contentEl.children.length; i > 0; i--) {
+          const element = this.contentEl.children.item(i);
+          if (element?.className == "setting-item fiszbin_flashcard_rows") {
+            element?.remove();
+          }
+        }
       });
     });
 
@@ -82,12 +95,21 @@ export class FlashcardsModal extends Modal {
             return;
           }
           const createdNotesIds = await this.ankiConnect.bulkSendToAnki(
-            this.flashcards,
+            this.plugin.pendingFlashcards,
             this.deckName
           );
+
+          const createdNotesCount = createdNotesIds.length;
+          const emptyNotesNotice =
+            createdNotesCount != this.plugin.pendingFlashcards.length
+              ? ` ${
+                  this.plugin.pendingFlashcards.length - createdNotesCount
+                } empty flashcards were skipped`
+              : "";
           new Notice(
-            `${createdNotesIds.length} flashcards successfully sent to Anki`
+            `${createdNotesIds.length} flashcards successfully sent to Anki.${emptyNotesNotice}`
           );
+          this.plugin.pendingFlashcards = [];
         } catch (error) {
           new Notice(`Failed to send flashcards to Anki: ${error}`);
         }
@@ -96,7 +118,7 @@ export class FlashcardsModal extends Modal {
     });
 
     // Rows including generated flashcards
-    this.flashcards.map((flashcard) => {
+    this.plugin.pendingFlashcards.map((flashcard) => {
       const setting = new Setting(this.contentEl);
       setting.setClass("fiszbin_flashcard_rows").addTextArea((textArea) => {
         textArea.setValue(flashcard.question).onChange((value) => {
@@ -113,7 +135,7 @@ export class FlashcardsModal extends Modal {
           .setButtonText("Delete")
           .setIcon("trash")
           .onClick(() => {
-            this.flashcards.remove(flashcard);
+            this.plugin.pendingFlashcards.remove(flashcard);
             setting.settingEl.remove();
           });
       });
